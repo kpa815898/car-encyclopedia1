@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Car Encyclopedia — Starter</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,Helvetica,Arial;--accent:#0b74de}
+    body{margin:0;padding:20px;background:#f6f7fb;color:#111}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    input.search{flex:1;padding:10px 12px;border-radius:8px;border:1px solid #d7dbe8}
+    button{background:var(--accent);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    .wrap{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    .card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+    .results{display:grid;gap:10px}
+    .car-item{display:flex;gap:12px;align-items:center}
+    .car-thumb{width:96px;height:56px;background:#eee;border-radius:6px;object-fit:cover}
+    .meta{flex:1}
+    .meta h4{margin:0 0 6px;font-size:16px}
+    .meta p{margin:0;font-size:13px;color:#555}
+    .fav{background:transparent;border:1px solid #ddd;padding:6px;border-radius:8px;cursor:pointer}
+    .section-title{font-weight:600;margin-bottom:8px}
+    .small{font-size:13px;color:#666}
+    .collection-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .card-visual{border-radius:6px;padding:8px;background:linear-gradient(180deg,#fff,#fafcff);border:1px solid #eee}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#222;color:#fff;font-size:12px}
+    footer{margin-top:18px;color:#666;font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Car Encyclopedia</h2>
+    <input id="search" class="search" placeholder="차 모델명을 입력하세요. 예: Maybach GLS 600" />
+    <button id="btn-search">검색</button>
+  </header>
+
+  <div class="wrap">
+    <main>
+      <div class="card">
+        <div class="section-title">검색 결과</div>
+        <div id="results" class="results small">검색어를 입력하고 검색 버튼을 누르세요.</div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="section-title">일일 퀴즈</div>
+        <div id="quiz-area" class="small">
+          하루에 한 번 무료로 퀴즈를 풀 수 있습니다. 정답을 맞추면 차량 카드를 드립니다.
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+            <button id="btn-quiz">퀴즈 풀기 (무료 1회)</button>
+            <button id="btn-buy">추가 퀴즈 구매</button>
+            <div id="quiz-status" class="small" style="margin-left:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div class="section-title">내 컬렉션</div>
+        <div id="collection" class="collection-grid small"></div>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card">
+        <div class="section-title">즐겨찾기</div>
+        <div id="favorites" class="small"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        
+        
+      </div>
+    </aside>
+  </div>
+
+  
+  </footer>
+
+  <script>
+    /***** 샘플 차량 데이터 (최소한의 예시) *****/
+    const CARS = [
+      {id:'maybach-gls600',brand:'Mercedes-Maybach',model:'GLS 600',power:550,torque:730,zero:4.9,price:'약 4억~5억',img:'https://cdn.motor1.com/images/mgl/y2Gz9l/s1/2024-mercedes-maybach-gls600-review---48.jpg'},
+      {id:'bmw-m5',brand:'BMW',model:'M5 F90',power:600,torque:750,zero:3.4,price:'약 1.5억~2억',img:'https://picsum.photos/s240eed/m2/400/240'},
+      {id:'lambo-aventador',brand:'Lamborghini',model:'Aventador',power:770,torque:720,zero:2.9,price:'약 5억~7억',img:'https://picsum.photos/seed/m3/400/240'},
+      {id:'porsche-911',brand:'Porsche',model:'911 Carrera',power:385,torque:450,zero:4.0,price:'약 1억~1.6억',img:'https://picsum.photos/seed/m4/400/240'},
+      {id:'tesla-model-s',brand:'Tesla',model:'Model S Plaid',power:1020,torque:null,zero:2.1,price:'약 1.4억~2억',img:'https://picsum.photos/seed/m5/400/240'},
+      {id:'toyota-supra',brand:'Toyota',model:'GR Supra',power:382,torque:500,zero:4.1,price:'약 7천만~1억',img:'https://picsum.photos/seed/m6/400/240'},
+      {id:'audi-r8',brand:'Audi',model:'R8',power:562,torque:550,zero:3.4,price:'약 2억~3억',img:'https://picsum.photos/seed/m7/400/240'},
+      {id:'ferrari-812',brand:'Ferrari',model:'812 Superfast',power:800,torque:718,zero:2.9,price:'수억',img:'https://picsum.photos/seed/m8/400/240'},
+      {id:'rolls-phantom',brand:'Rolls-Royce',model:'Phantom',power:563,torque:900,zero:5.3,price:'수억',img:'https://picsum.photos/seed/m9/400/240'},
+      {id:'mini-cooper',brand:'Mini',model:'Cooper S',power:189,torque:240,zero:6.7,price:'약 3천만~4천만',img:'https://picsum.photos/seed/m10/400/240'}
+    ];
+
+    /***** 로컬스토리지 헬퍼 *****/
+    const storage = {
+      get(key, def){const v=localStorage.getItem(key);return v?JSON.parse(v):def},
+      set(key, val){localStorage.setItem(key, JSON.stringify(val))}
+    }
+
+    // 즐겨찾기, 컬렉션, 퀴즈 사용 여부 저장
+    let favorites = storage.get('ce.fav', []);
+    let collection = storage.get('ce.coll', []);
+    let quizMeta = storage.get('ce.quiz', {lastDate:null,extra:0});
+
+    const el = id=>document.getElementById(id);
+
+    // 초기 렌더
+    function renderFavorites(){
+      const node = el('favorites');
+      if(!favorites.length){node.innerHTML='<div class="small">즐겨찾기가 비어있습니다.</div>';return}
+      node.innerHTML = favorites.map(id=>{
+        const c = CARS.find(x=>x.id===id);
+        return `<div class="car-item"><img src="${c.img}" class="car-thumb"/><div class="meta"><h4>${c.brand} ${c.model}</h4><p class="small">${c.price}</p></div></div>`
+      }).join('')
+    }
+
+    function renderCollection(){
+      const node = el('collection');
+      if(!collection.length){node.innerHTML='<div class="small">컬렉션이 비어있습니다.</div>';return}
+      node.innerHTML = collection.map(card=>{
+        return `<div class="card-visual"><div style="display:flex;justify-content:space-between"><strong>${card.title}</strong><span class="badge">${card.rarity}</span></div><div style="margin-top:8px"><img src="${card.img}" style="width:100%;height:90px;object-fit:cover;border-radius:6px"/></div><div class="small" style="margin-top:6px">${card.meta}</div></div>`
+      }).join('')
+    }
+
+    function renderResults(list){
+      const node = el('results');
+      if(!list.length){node.innerHTML='<div class="small">검색 결과가 없습니다.</div>';return}
+      node.innerHTML = list.map(c=>`<div class="car-item"><img src="${c.img}" class="car-thumb"/><div class="meta"><h4>${c.brand} ${c.model}</h4><p class="small">마력: ${c.power || '-'} / 제로백: ${c.zero || '-'}s / 가격: ${c.price}</p></div><div><button class="fav" data-id="${c.id}">${favorites.includes(c.id)?'★':'＋'}</button></div></div>`).join('');
+      // attach fav listeners
+      node.querySelectorAll('button.fav').forEach(b=>b.addEventListener('click',e=>{
+        const id = e.currentTarget.dataset.id;
+        if(favorites.includes(id)) favorites = favorites.filter(x=>x!==id); else favorites.push(id);
+        storage.set('ce.fav', favorites); renderFavorites(); renderResults(list);
+      }))
+    }
+
+    // 검색 로직: 단순 부분 일치
+    function normalize(str){
+  return (str || "")
+    .toLowerCase()
+    .replace(/\s+/g, "")        
+    .replace(/-/g, "");         
+}
+
+function doSearch(q){
+  const query = normalize(q);
+  if(!query) return renderResults([]);
+
+  const found = CARS.filter(car=>{
+    const full = normalize(car.brand + car.model);
+    const model = normalize(car.model);
+    const brand = normalize(car.brand);
+    return full.includes(query) || model.includes(query) || brand.includes(query);
+  });
+
+  renderResults(found);
+}
+
+
+    // 퀴즈 로직: 하루 1회 무료
+    function canTakeDaily(){
+      const today = new Date().toISOString().slice(0,10);
+      return quizMeta.lastDate !== today || (quizMeta.extra && quizMeta.extra>0);
+    }
+
+    function updateQuizStatus(){
+      const status = el('quiz-status');
+      const today = new Date().toISOString().slice(0,10);
+      status.textContent = quizMeta.lastDate===today ? '오늘 무료 퀴즈를 이미 사용했습니다.' : '오늘 무료 퀴즈 가능';
+      if(quizMeta.extra>0) status.textContent += ` | 추가 티켓: ${quizMeta.extra}`;
+    }
+
+    // 확률 기반 등급 뽑기
+    function rollRarity(){
+      const r = Math.random()*100;
+      if(r<60) return 'Common';
+      if(r<85) return 'Rare';
+      if(r<95) return 'Epic';
+      return 'Legendary';
+    }
+
+    function giveRandomCard(){
+      const car = CARS[Math.floor(Math.random()*CARS.length)];
+      const rarity = rollRarity();
+      const card = {id:car.id + ':' + Date.now(), title:`${car.brand} ${car.model}`, rarity, img:car.img, meta:`마력 ${car.power||'-'} / 제로백 ${car.zero||'-'}s`};
+      collection.push(card); storage.set('ce.coll', collection); renderCollection();
+      alert(`축하합니다! ${rarity} 카드를 획득했습니다: ${card.title}`);
+    }
+
+    // 퀴즈 UI 간단 구현: 객관식 1문제
+    function startQuiz(){
+      if(!canTakeDaily()){alert('오늘은 더 이상 무료 퀴즈를 풀 수 없습니다. 추가 퀴즈를 구매하세요.');return}
+      // 마크: 간단한 문제 생성 (랜덤 차량의 마력 맞추기 유형)
+      const car = CARS[Math.floor(Math.random()*CARS.length)];
+      const correct = car.power;
+      // 세개의 보기 생성
+      const choices = new Set(); choices.add(correct);
+      while(choices.size<3){
+        const delta = (Math.floor(Math.random()*120)+10) * (Math.random()<0.5? -1:1);
+        choices.add(Math.max(50, correct + delta));
+      }
+      const arr = Array.from(choices).sort(()=>Math.random()-0.5);
+      const ans = prompt(`다음 차량의 마력은?\n${car.brand} ${car.model}\n보기: ${arr.join(' / ')}\n정답 숫자만 입력하세요.`);
+      if(ans===null) return;
+      if(parseInt(ans)===correct){
+        giveRandomCard();
+      } else alert('틀렸습니다. 다음에 도전하세요.');
+      // 사용 처리: 무료일 경우 lastDate 기록, else 소모 티켓
+      const today = new Date().toISOString().slice(0,10);
+      if(quizMeta.lastDate!==today){ quizMeta.lastDate = today; } else if(quizMeta.extra>0){ quizMeta.extra -= 1; }
+      storage.set('ce.quiz', quizMeta); updateQuizStatus();
+    }
+
+    // 구매 시뮬레이션: 실제 결제 연동은 추후
+    function buyExtra(){
+      const ok = confirm('추가 퀴즈 1회권을 구매하시겠습니까? (실제 결제 연동 없음, 로컬에 티켓 1회 추가)');
+      if(!ok) return;
+      quizMeta.extra = (quizMeta.extra||0) + 1; storage.set('ce.quiz', quizMeta); updateQuizStatus(); alert('구매 완료: 추가 퀴즈 1회권이 추가되었습니다.');
+    }
+
+    // 이벤트 바인딩
+    el('btn-search').addEventListener('click',()=>doSearch(el('search').value));
+    el('search').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(el('search').value) });
+    el('btn-quiz').addEventListener('click',startQuiz);
+    el('btn-buy').addEventListener('click',buyExtra);
+
+    // 초기 렌더 호출
+    renderFavorites(); renderCollection(); updateQuizStatus();
+
+  </script>
+</body>
+</html>
